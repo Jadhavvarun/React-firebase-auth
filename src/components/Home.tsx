@@ -2,69 +2,84 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../firebase/firebase";
 import { signOut } from "firebase/auth";
+import { User, LogIn, LogOut, UserPlus, Loader } from "lucide-react";
 
 const Home = () => {
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUser(user); // User is signed in
-      } else {
-        setUser(null); // No user is signed in
-      }
+      setUser(user);
+      setLoading(false);
     });
-
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setUser(null); // Clear the user state
-      navigate("/signin"); // Redirect to sign-in page
+      setUser(null);
+      navigate("/signin");
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0F0424]">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold mb-4">Welcome to My App</h1>
-        {user ? (
-          <h2 className="text-xl mb-4">
-            <span className="font-semibold">{user.displayName || user.email}</span>!
-          </h2>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">
+      <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <Loader className="w-12 h-12 text-blue-500 animate-spin" />
+          </div>
         ) : (
-          <h2 className="text-xl mb-4">Please sign in to continue.</h2>
+          <div className="space-y-6">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome to My App</h1>
+              <div className="h-1 w-20 bg-blue-500 mx-auto rounded-full"></div>
+            </div>
+            
+            {user ? (
+              <div className="text-center">
+                <User className="w-16 h-16 mx-auto text-blue-500 mb-2" />
+                <h2 className="text-xl text-gray-700">
+                  Hello, <span className="font-semibold">{user.displayName || user.email}</span>!
+                </h2>
+              </div>
+            ) : (
+              <p className="text-center text-gray-600">Please sign in to continue.</p>
+            )}
+
+            <div className="flex flex-col space-y-3">
+              {!user ? (
+                <>
+                  <Link to="/signup" className="w-full">
+                    <button className="w-full bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-300 ease-in-out flex items-center justify-center">
+                      <UserPlus className="w-5 h-5 mr-2" />
+                      Sign Up
+                    </button>
+                  </Link>
+                  <Link to="/signin" className="w-full">
+                    <button className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 ease-in-out flex items-center justify-center">
+                      <LogIn className="w-5 h-5 mr-2" />
+                      Sign In
+                    </button>
+                  </Link>
+                </>
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300 ease-in-out flex items-center justify-center"
+                >
+                  <LogOut className="w-5 h-5 mr-2" />
+                  Logout
+                </button>
+              )}
+            </div>
+          </div>
         )}
-        <div className="flex flex-col items-center space-y-4 mt-4">
-          {!user ? (
-            <>
-              <Link to="/signup">
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition">
-                  Sign Up
-                </button>
-              </Link>
-              <Link to="/signin">
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition">
-                  Sign In
-                </button>
-              </Link>
-            </>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
